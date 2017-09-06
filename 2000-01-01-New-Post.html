@@ -1,0 +1,226 @@
+---
+layout: post
+title: "ib record"
+date: 2017-06-23 16:03:27 +0800
+tags: UNIX OS
+duoshuo: true
+---
+
+<div id="cnblogs_post_body"><p><strong><span style="color: #ff00ff">2016-08-26 ib1</span></strong></p>
+<div>ib0不见了</div>
+<div>&nbsp;</div>
+<div>0000:04:00.0 'MT27500 Family [ConnectX-3]'</div>
+<div>&nbsp;</div>
+<div>做法：如果直接绑定不行，那就试试vf的那个</div>
+<div>总之试试在先</div>
+<div>&nbsp;</div>
+<div>connectx_port_config修改ib网卡的模式为Ethernet</div>
+<div>然后</div>
+<div>&nbsp;</div>
+<div><strong><span style="color: #ff00ff">2016-08-28&nbsp;setup.sh igb_uio+vfio</span></strong></div>
+<div>
+<div>只有vfio不行</div>
+<div>&nbsp;</div>
+<div>librte_pmd_mlx4: cannot access device, is mlx4_ib loaded?</div>
+<div>&nbsp;</div>
+<div>libibverbs&nbsp;</div>
+<div>If you intend to use&nbsp;dynamic libraries, you should uninstall libibverbs,&nbsp;libmlx4 and related packages first.</div>
+<div>&nbsp;</div>
+<div>&nbsp;</div>
+<div>&nbsp;</div>
+<div>0828新试：</div>
+<div><span style="color: #222222; font-family: &quot;Helvetica Neue&quot;, Arial, sans-serif">Ethernet+mtcp看看行不行</span></div>
+<div>&nbsp;</div>
+<div><span style="color: #222222; font-family: &quot;Helvetica Neue&quot;, Arial, sans-serif">还是不行，应该最终还是不行。下周试试dpdk2.2</span></div>
+<div>&nbsp;</div>
+<div><strong><span style="color: #ff00ff">&nbsp;2016-08-29&nbsp;some commands</span></strong></div>
+<div>
+<div>mstflint -d 04:00.0 q</div>
+<div>&nbsp;</div>
+<div>ConnectX PCI devices :</div>
+<div>|----------------------------|</div>
+<div>| 1&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;0000:04:00.0 |</div>
+<div>|----------------------------|</div>
+<div>&nbsp;</div>
+<div>Before port change:</div>
+<div>auto (ib)</div>
+<div>&nbsp;</div>
+<div>死活只有一个端口，没有俩端口~</div>
+<div>&nbsp;</div>
+<div>./configure&nbsp;--with-mlx4_fc-mod&nbsp;&nbsp;--with-mlx4_inf-mod&nbsp;--with-core-mod&nbsp;--with-user_mad-mod&nbsp;--with-user_access-mod&nbsp;--with-addr_trans-mod&nbsp;--with-mlx4-mod&nbsp;--with-mlx4_en-mod&nbsp;--with-ipoib-mod&nbsp;--with-srp-mod&nbsp;--with-rds-mod&nbsp;--with-iser-mod&nbsp;--kernel-version=3.10.0-mlx&nbsp;--modules-dir=/lib/modules/3.10.0-mlx/&nbsp;--kernel-sources=/work/kernel-3.10.0-123.el7.src/linux-3.10.0-123.el7</div>
+<div>&nbsp;</div>
+<div>/usr/bin/ld: cannot find /root/pool/install/usr/local/lib: File format not recognized</div>
+<div>collect2: error: ld returned 1 exit status</div>
+<div>/root/dpdk/mk/rte.app.mk:230: recipe for target 'test' failed</div>
+<div>make[4]: *** [test] Error 1</div>
+<div>/root/dpdk/mk/rte.subdir.mk:61: recipe for target 'test' failed</div>
+<div>make[3]: *** [test] Error 2</div>
+<div>/root/dpdk/mk/rte.sdkbuild.mk:78: recipe for target 'app' failed</div>
+<div>make[2]: *** [app] Error 2</div>
+<div>/root/dpdk/mk/rte.sdkroot.mk:123: recipe for target 'all' failed</div>
+<div>make[1]: *** [all] Error 2</div>
+<div>Makefile:12: recipe for target 'all' failed</div>
+<div>make: *** [all] Error 2</div>
+<div>&nbsp;</div>
+<div>
+<p><span style="color: #ff00ff"><strong>2016-08-29 ib0</strong></span></p>
+</div>
+<div>
+<div>-w 0000:04:00.0</div>
+<div>&nbsp;</div>
+<div>
+<div><em>1.&nbsp;Install&nbsp;OFED,&nbsp;run&nbsp;/etc/init.d/openibd&nbsp;restart</em></div>
+<div><em>2.&nbsp;Compile&nbsp;DPDK&nbsp;with&nbsp;</em><em>the&nbsp;CONFIG_RTE_LIBRTE_MLX4_PMD=y &nbsp;</em> &lt;dpdkdir&gt;/config/common_base</div>
+<div><em>3.&nbsp;Set&nbsp;up&nbsp;hugepages</em></div>
+<div><em>4.&nbsp;Load&nbsp;kernel&nbsp;</em><em>modules</em></div>
+<div><em>5.&nbsp;Run&nbsp;testpmd</em></div>
+<div><em>&nbsp;</em></div>
+<div>
+<div>modprobe&nbsp;-a&nbsp;ib_uverbs&nbsp;mlx4_en&nbsp;mlx4_core&nbsp;mlx4_ib</div>
+<div>&nbsp;</div>
+<div>&nbsp;</div>
+<div>export&nbsp;RTE_SDK=/root/dpdk</div>
+<div>export&nbsp;RTE_TARGET=x86_64-native-linuxapp-gcc</div>
+<div><span style="color: #111111; font-family: Arial, Helvetica, sans-serif; font-size: small">make</span></div>
+<div>&nbsp;</div>
+<div>mkdir&nbsp;-p&nbsp;/mnt/huge</div>
+<div>mount&nbsp;-t&nbsp;hugetlbfs&nbsp;nodev&nbsp;/mnt/huge</div>
+<div>echo&nbsp;64&nbsp;&gt;&nbsp;/sys/devices/system/node/node0/hugepages/hugepages-2048kB/nr_hugepages</div>
+<div>modprobe&nbsp;-a&nbsp;ib_uverbs&nbsp;mlx4_en&nbsp;mlx4_core&nbsp;mlx4_ib</div>
+<div>/etc/init.d/openibd&nbsp;restart</div>
+<div>
+<div>ls&nbsp;-d&nbsp;/sys/class/net/*/device/infiniband_verbs/uverbs*&nbsp;|&nbsp;cut&nbsp;-d&nbsp;/&nbsp;-f&nbsp;5</div>
+<div>&nbsp;</div>
+<div>(cd&nbsp;"/sys/class/net/eth2/device/"&nbsp;&amp;&amp;&nbsp;pwd&nbsp;-P) |&nbsp;sed&nbsp;-n&nbsp;'s,.*/<span class="MathJax_Preview" style="color: inherit;"></span><span class="MathJax" id="MathJax-Element-1-Frame" tabindex="0" data-mathml="<math xmlns=&quot;http://www.w3.org/1998/Math/MathML&quot;><mo>.</mo><mo>&amp;#x2217;</mo></math>" role="presentation" style="position: relative;"><nobr aria-hidden="true"><span class="math" id="MathJax-Span-1" role="math" style="width: 1.043em; display: inline-block;"><span style="display: inline-block; position: relative; width: 0.904em; height: 0px; font-size: 111%;"><span style="position: absolute; clip: rect(1.459em 1000.84em 2.36em -999.997em); top: -2.145em; left: 0.003em;"><span class="mrow" id="MathJax-Span-2"><span class="mo" id="MathJax-Span-3" style="font-family: MathJax_Main;">.</span><span class="mo" id="MathJax-Span-4" style="font-family: MathJax_Main; padding-left: 0.142em;">∗</span></span><span style="display: inline-block; width: 0px; height: 2.152em;"></span></span></span><span style="display: inline-block; overflow: hidden; vertical-align: -0.073em; border-left: 0px solid; width: 0px; height: 0.696em;"></span></span></nobr><span class="MJX_Assistive_MathML" role="presentation"><math xmlns="http://www.w3.org/1998/Math/MathML"><mo>.</mo><mo>∗</mo></math></span></span><script type="math/tex" id="MathJax-Element-1">.*</script>,-w&nbsp;\1,p'</div>
+<div>echo&nbsp;1024&nbsp;&gt;&nbsp;/sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages/nr_hugepages</div>
+<div>./tools/dpdk-devbind.py --bind=mlx4_core 04:00.0</div>
+<div>&nbsp;</div>
+<div>Cannot open /sys/bus/pci/drivers/mlnx_core/bind</div>
+<div>&nbsp;</div>
+<div><span style="color: #111111; font-family: Arial, Helvetica, sans-serif; font-size: small">两个地方的.config文件都改了，希望可以</span></div>
+<div>&nbsp;</div>
+<div><strong><span style="color: #ff00ff; font-family: Arial, Helvetica, sans-serif; font-size: small">2016-08-29 useless</span></strong></div>
+<div>
+<div>librte_pmd_mlx4: cannot access device, is mlx4_ib loaded?</div>
+<div>&nbsp;</div>
+<div>EAL: Detected 16 lcore(s)</div>
+<div>EAL: Probing VFIO support...</div>
+<div>EAL: VFIO support initialized</div>
+<div>PMD: bnxt_rte_pmd_init() called for (null)</div>
+<div>EAL: PCI device 0000:04:00.0 on NUMA socket 0</div>
+<div>EAL:&nbsp; &nbsp;probe driver: 15b3:1003 librte_pmd_mlx4</div>
+<div>PMD: librte_pmd_mlx4: PCI information matches, using device "mlx4_0" (VF: false)</div>
+<div>PMD: librte_pmd_mlx4: 1 port(s) detected</div>
+<div>PMD: librte_pmd_mlx4: port 1 MAC address is 46:c9:20:00:36:f0</div>
+<div>Interactive-mode selected</div>
+<div>USER1: create a new mbuf pool &lt;mbuf_pool_socket_0&gt;: n=203456, size=2176, socket=0</div>
+<div>&nbsp;</div>
+<div>Warning! Cannot handle an odd number of ports with the current port topology. Configuration must be changed to have an even number of ports, or relaunch application with --port-topology=chained</div>
+<div>&nbsp;</div>
+<div>Configuring Port 0 (socket 0)</div>
+<div>PMD: librte_pmd_mlx4: 0xae7840: TX queues number update: 0 -&gt; 1</div>
+<div>PMD: librte_pmd_mlx4: 0xae7840: RX queues number update: 0 -&gt; 1</div>
+<div>PMD: librte_pmd_mlx4: mempool 0x7f454147dec0: not virtually contiguous</div>
+<div>PMD: librte_pmd_mlx4: mempool 0x7f454147dec0: not virtually contiguous</div>
+<div>PMD: librte_pmd_mlx4: 0xae7840: MR creation failure: Invalid argument</div>
+<div>Fail to configure port 0 rx queues</div>
+<div>EAL: Error - exiting with code: 1</div>
+<div>&nbsp; Cause: Start ports failed</div>
+<div>&nbsp;</div>
+<div>&nbsp;</div>
+<div>root@node112~/dpdk# ./x86_64-native-linuxapp-gcc/app<strong>/testpmd -c 0xff00 -n 4 -w 0000:04:00.0 -w 0000:03:00.1 -- -i</strong></div>
+<div>EAL: Detected 16 lcore(s)</div>
+<div>EAL: Probing VFIO support...</div>
+<div>EAL: VFIO support initialized</div>
+<div>PMD: bnxt_rte_pmd_init() called for (null)</div>
+<div>EAL: PCI device 0000:03:00.1 on NUMA socket -1</div>
+<div>EAL:&nbsp; &nbsp;probe driver: 8086:1510 rte_igb_pmd</div>
+<div>EAL: PCI device 0000:04:00.0 on NUMA socket 0</div>
+<div>EAL:&nbsp; &nbsp;probe driver: 15b3:1003 librte_pmd_mlx4</div>
+<div>PMD: librte_pmd_mlx4: PCI information matches, using device "mlx4_0" (VF: false)</div>
+<div>PMD: librte_pmd_mlx4: 1 port(s) detected</div>
+<div>PMD: librte_pmd_mlx4: port 1 MAC address is 46:c9:20:00:36:f0</div>
+<div>Interactive-mode selected</div>
+<div>USER1: create a new mbuf pool &lt;mbuf_pool_socket_0&gt;: n=203456, size=2176, socket=0</div>
+<div>&nbsp;</div>
+<div>Warning! Cannot handle an odd number of ports with the current port topology. Configuration must be changed to have an even number of ports, or relaunch application with --port-topology=chained</div>
+<div>&nbsp;</div>
+<div>Configuring Port 0 (socket 0)</div>
+<div>PMD: librte_pmd_mlx4: 0xae7840: TX queues number update: 0 -&gt; 1</div>
+<div>PMD: librte_pmd_mlx4: 0xae7840: RX queues number update: 0 -&gt; 1</div>
+<div>PMD: librte_pmd_mlx4: mempool 0x7fb11447dec0: not virtually contiguous</div>
+<div>PMD: librte_pmd_mlx4: mempool 0x7fb11447dec0: not virtually contiguous</div>
+<div>PMD: librte_pmd_mlx4: 0xae7840: MR creation failure: Invalid argument</div>
+<div>Fail to configure port 0 rx queues</div>
+<div>EAL: Error - exiting with code: 1</div>
+<div>&nbsp; Cause: Start ports failed</div>
+<div>&nbsp;</div>
+<div>root@node112~/dpdk# <strong>./examples/l2fwd/build/l2fwd -c1 -n1 -- -p1</strong></div>
+<div>EAL: Detected 16 lcore(s)</div>
+<div>EAL: Probing VFIO support...</div>
+<div>EAL: VFIO support initialized</div>
+<div>PMD: bnxt_rte_pmd_init() called for (null)</div>
+<div>EAL: PCI device 0000:03:00.0 on NUMA socket -1</div>
+<div>EAL:&nbsp; &nbsp;probe driver: 8086:1510 rte_igb_pmd</div>
+<div>EAL: PCI device 0000:03:00.1 on NUMA socket -1</div>
+<div>EAL:&nbsp; &nbsp;probe driver: 8086:1510 rte_igb_pmd</div>
+<div>EAL: PCI device 0000:04:00.0 on NUMA socket 0</div>
+<div>EAL:&nbsp; &nbsp;probe driver: 15b3:1003 librte_pmd_mlx4</div>
+<div>PMD: librte_pmd_mlx4: PCI information matches, using device "mlx4_0" (VF: false)</div>
+<div>PMD: librte_pmd_mlx4: 1 port(s) detected</div>
+<div>PMD: librte_pmd_mlx4: port 1 MAC address is 46:c9:20:00:36:f0</div>
+<div>Notice: odd number of ports in portmask.</div>
+<div>Lcore 0: RX port 0</div>
+<div>Initializing port 0... PMD: librte_pmd_mlx4: 0x84a9c0: TX queues number update: 0 -&gt; 1</div>
+<div>PMD: librte_pmd_mlx4: 0x84a9c0: RX queues number update: 0 -&gt; 1</div>
+<div>PMD: librte_pmd_mlx4: 0x7fff41b6c8e0: flow configuration failed, errno=38: Function not implemented</div>
+<div>PMD: librte_pmd_mlx4: 0x84a9c0: QP flow attachment failed: Function not implemented</div>
+<div>EAL: Error - exiting with code: 1</div>
+<div>&nbsp; Cause: rte_eth_rx_queue_setup:err=-38, port=0</div>
+<div>&nbsp;</div>
+<div><strong><span style="color: #ff00ff">2016-08-30&nbsp;details</span></strong></div>
+<div>
+<div>整理一：</div>
+<div>1, &lt;dpdk&gt;/config/common_base: set&nbsp;<em>CONFIG_RTE_LIBRTE_MLX4_PMD = y</em></div>
+<div>2,&nbsp;modprobe -a ib_uverbs mlx4_en mlx4_core mlx4_ib</div>
+<div>3,&nbsp;/etc/init.d/openibd restart</div>
+<div>4, build dpdk &amp; setup hugepages</div>
+<div>&nbsp;</div>
+<div>不需要将网卡用igb_uio或vfio绑定，直接运行dpdk的l2fwd程序能够自动找到对应网卡</div>
+<div>&nbsp;</div>
+<div>整理二：</div>
+<div>&nbsp;</div>
+<div>&nbsp;</div>
+<div>./build/build/app/test-pmd/testpmd -c 0xf -n 4 -w 0000:01:00.0 -- --rxq=2 --txq=2 -i</div>
+<div>&nbsp;</div>
+<div><strong><span style="color: #ff00ff">2016-12-02 next</span></strong></div>
+<div>
+<div>要不要试一试ofed2.4看看，虽然它说不能在debian8.3上面搞，但是可以试试，它的内核可以支持到3.18，目前debian的内核是3.16</div>
+<div>&nbsp;</div>
+<div>Failed to check for authentication: GDBus.Error:org.freedesktop.PolicyKit1.Error.</div>
+<div>Failed: Action org.freedesktop.packagekit.system-update is not registered</div>
+<div>&nbsp;</div>
+</div>
+<div><strong><span style="color: #ff00ff">2016-12-19 pica8</span></strong></div>
+<div>
+<div>ovs-vsctl&nbsp;add-port&nbsp;br0&nbsp;ge-1/1/1&nbsp;vlan_mode=access&nbsp;tag=1&nbsp;--&nbsp;set&nbsp;Interface<br>
+ge-1/1/1&nbsp;type=pica8</div>
+<div>&nbsp;</div>
+<div>ovs-vsctl&nbsp;add-port&nbsp;br0&nbsp;te-1/1/49&nbsp;vlan_mode=trunk&nbsp;tag=1&nbsp;--&nbsp;set&nbsp;Interface</div>
+<div>te-1/1/49&nbsp;type=pica8&nbsp;options:is_dac=true</div>
+<div>&nbsp;</div>
+<div>ovs-ofctl show br0 #显示所有端口信息</div>
+<div>&nbsp;</div>
+<div>ryu-manager --ofp-tcp-listen-port 6633 ryu.app.simple_switch_13</div>
+<div>&nbsp;</div>
+<div>&nbsp;</div>
+<div>leave minicom ctrl+a，x</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
